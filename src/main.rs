@@ -1,0 +1,72 @@
+mod modes;
+
+use std::io::{self, Write};
+
+const BANNER: &str = "\n\
+  ____        _ _                _       _\n\
+ |  _ \\      | | |              (_)     | |\n\
+ | |_) |_   _| | |___  ___ _ __ _ _ __ | |_\n\
+ |  _ <| | | | | / __|/ __| '__| | '_ \\| __|\n\
+ | |_) | |_| | | \\__ \\ (__| |  | | |_) | |_\n\
+ |____/ \\__,_|_|_|___/\\___|_|  |_| .__/ \\__|\n\
+                                  | |\n\
+                                  |_|\n\
+\n\
+Bullscript 1.0.0 — interactive Bullang tool\n\
+Type 'help' for available commands.\n\
+";
+
+fn main() {
+    println!("{}", BANNER);
+
+    loop {
+        print!("command -> ");
+        io::stdout().flush().unwrap();
+
+        let mut line = String::new();
+        match io::stdin().read_line(&mut line) {
+            Ok(0) => { println!("\nGoodbye."); break; }
+            Ok(_) => {}
+            Err(e) => { eprintln!("Read error: {}", e); break; }
+        }
+
+        let line = line.trim();
+        if line.is_empty() { continue; }
+
+        // Split into at most 4 parts so output_file path is kept whole
+        let parts: Vec<&str> = line.splitn(4, ' ').collect();
+
+        match parts[0] {
+            "help"  => modes::help::run(),
+            "build" => modes::build::run(),
+            "test"  => modes::test::run(),
+
+            "run" => {
+                if parts.len() < 2 {
+                    eprintln!("  Usage: run <file.bu>");
+                } else {
+                    modes::run::run(parts[1]);
+                }
+            }
+
+            "arrow" => {
+                if parts.len() < 4 {
+                    eprintln!("  Usage: arrow <first> <second> <output_file>");
+                } else {
+                    modes::arrow::run(parts[1], parts[2], parts[3]);
+                }
+            }
+
+            "update" => {
+                modes::update::run();
+            }
+
+            "exit" => { println!("Goodbye."); break; }
+
+            other => eprintln!(
+                "  Unknown command: '{}'. Type 'help' for available commands.",
+                other
+            ),
+        }
+    }
+}
